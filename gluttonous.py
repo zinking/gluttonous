@@ -38,6 +38,6 @@ class HelloWorld(cocos.layer.Layer):
             self.update_score()
 
 
-cocos.director.director.init(caption="Gluttonous Python")
+cocos.director.director.init(caption="Gluttonous")
 cocos.director.director.run(cocos.scene.Scene(HelloWorld()))
 
