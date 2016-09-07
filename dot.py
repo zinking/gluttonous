@@ -1,17 +1,17 @@
 # -*- coding: utf-8 -*-
 import random
-from cocos.actions import MoveTo, CallFuncS
+from cocos.actions import MoveTo
 from cocos.sprite import Sprite
 
 import define
 
-class Dot(Sprite):
-    def __init__(self, pos=None, color=None):
-        if color is None:
-            color = random.choice(define.ALL_COLOR)
 
+
+class Dot(Sprite):
+    DOTID = 0
+    def __init__(self, pos=None, color=None):
+        if color is None:color = random.choice(define.ALL_COLOR)
         super(Dot, self).__init__('circle.png', color=color)
-        self.killed = False
         if pos is None:
             self.position = (random.randint(40, define.WIDTH - 40),
                              random.randint(40, define.HEIGHT - 40))
@@ -21,16 +21,15 @@ class Dot(Sprite):
             self.position = (pos[0] + random.random() * 32 - 16,
                              pos[1] + random.random() * 32 - 16)
             self.is_big = True
-        self.tag = "Dot[%d,%d]"%(self.position[0],self.position[1])
+
+        self.tag = "Dot-%d"%(Dot.DOTID)
+        self.killed = False
+        Dot.DOTID += 1
         #self.schedule_interval(self.update, random.random() * 0.2 + 0.1)
 
     def reposition(self):
         self.position = (random.randint(40, define.WIDTH - 40),
                              random.randint(40, define.HEIGHT - 40))
-
-    # def update(self, dt):
-    #     arena = self.parent.parent
-    #     snake = arena.snake
 
     def check_kill(self, snake):
         if (not self.killed and not snake.is_dead) and (

@@ -2,8 +2,9 @@ import cocos
 from cocos.director import director
 
 import define
-from snake import Snake,SnakeAI
+from snake import Snake,SnakeAI,MySnakeAI
 from dot import Dot
+from quadtree import QuadTree
 
 class Arena(cocos.layer.ColorLayer):
     is_event_handler = True
@@ -14,12 +15,13 @@ class Arena(cocos.layer.ColorLayer):
         self.batch = cocos.batch.BatchNode()
         self.add(self.batch)
 
+        self.snake = MySnakeAI()
         self.snake = Snake()
         self.add(self.snake, 10000)
         self.snake.init_body()
 
-        self.enemies = []
-        self.dots = []
+        self.enemies = set([])
+        self.dots = set([])
         for i in range(7):
             self.add_enemy()
 
@@ -33,47 +35,50 @@ class Arena(cocos.layer.ColorLayer):
         enemy = SnakeAI()
         self.add(enemy, 10000)
         enemy.init_body()
-        self.enemies.append(enemy)
+        self.enemies.add(enemy)
 
     def remove_enemy(self, snake):
         self.remove(snake)
         self.enemies.remove(snake)
 
-    def add_dot(self):
-        d = Dot()
-        self.dots.append(d)
+    def add_dot(self, d = None):
+        if d is None: d = Dot()
+        self.dots.add(d)
         self.batch.add(d,name=d.tag)
 
     def remove_dot(self, dot):
-        self.batch.remove(dot.tag)
-        self.dots.remove(dot)
+        try:
+            self.dots.remove(dot)
+            self.batch.remove(dot.tag)
+        except Exception,e:
+            print e
 
     def detect_collision(self):
-        snakes = self.enemies + [self.snake]
-        sn = len(snakes)
-        for i in range(sn):
-            for j in range(sn):
-                sni = snakes[i]
-                snj = snakes[j]
-                if (i!=j):
-                    if sni.check_crash(snj):
-                        if self.snake == sni:
-                            self.parent.end_game()
-                        else:
-                            self.remove(sni)
-                            self.add_enemy()
+        snakes = set(self.enemies)
+        snakes.add(self.snake)
+        dots = self.dots
+        quad = QuadTree(3,(0,0,define.WIDTH,define.HEIGHT),snakes,dots)
+        def onSnakeCollide(snake):
+            if self.snake == snake:
+                self.parent.end_game()
+            else:
+                self.remove(snake)
+                self.add_enemy()
 
-                        for b in sni.body:
-                            self.batch.add(Dot(b.position, b.color))
-                            self.batch.add(Dot(b.position, b.color))
-                            self.batch.remove(b)
+            for b in snake.body:
+                bdot = Dot(b.position, b.color)
+                #self.batch.add(bdot)
+                #self.batch.add(Dot(b.position, b.color))
+                self.add_dot(bdot)
+                self.batch.remove(b)
+        def onSnakeDotCollide(dot,snake):
+            snake.add_score(2 if dot.is_big else 1)
+            if snake == self.snake: self.parent.update_score()
+            self.remove_dot(dot)
+            self.add_dot()
 
-        for snake in snakes:
-            for dot in self.dots:
-                if dot.check_kill(snake):
-                    snake.add_score(2 if dot.is_big else 1)
-                    if snake == self.snake: self.parent.update_score()
-                    self.remove_dot(dot)
+        quad.detect_collision(onSnakeCollide, onSnakeDotCollide)
+
 
 
     def update(self, dt):

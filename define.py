@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
-import random
 
-# 定义常量
 WIDTH = 1600
 HEIGHT = 800
 

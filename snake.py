@@ -104,27 +104,6 @@ class Snake(cocos.cocosnode.CocosNode):
             self.length = l
             self.add_body()
 
-    def collision_detect(self, other):
-        if self.is_dead or other.is_dead:
-            return
-        for b in other.body:
-            d_y = b.y - self.y
-            d_x = b.x - self.x
-            if abs(d_x) > 200 or abs(d_y) > 200:
-                return
-            if d_x == 0:
-                if d_y > 0:
-                    angle = 90
-                else:
-                    angle = -90
-            else:
-                angle = math.atan(d_y / d_x) * 180 / math.pi
-                if d_x < 0:
-                    angle += 180
-            angle = (angle + 360) % 360
-            if abs(angle - self.angle_dest) < 5:
-                self.angle_dest += random.randrange(90, 270)
-
     def check_crash(self, other):
         if self.is_dead or other.is_dead:
             return False
@@ -174,3 +153,21 @@ class SnakeAI(Snake):
             #del self.body
             self.unschedule(self.update)
             self.unschedule(self.ai)
+
+class MySnakeAI(Snake):
+    def __init__(self):
+        super(MySnakeAI, self).__init__()
+        self.dir = 0
+
+    def update(self, dt):
+        self.dir = random.randint(0,1)
+        print self.dir
+        if self.dir == 0: self.update_angle([65362])
+        else: self.update_angle([65364])
+        super(MySnakeAI, self).update(dt)
+
+    def ai(self, quad):
+        if quad.willSnakeCollide(self):
+            pass
+
+
