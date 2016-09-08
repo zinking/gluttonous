@@ -8,6 +8,8 @@ from quadtree import QuadTree
 
 class Arena(cocos.layer.ColorLayer):
     is_event_handler = True
+    MAX_DOTS = 50
+    MAX_SNAKES = 5
 
     def __init__(self):
         super(Arena, self).__init__(250, 255, 255, 255, define.WIDTH, define.HEIGHT)
@@ -22,36 +24,60 @@ class Arena(cocos.layer.ColorLayer):
 
         self.enemies = set([])
         self.dots = set([])
-        for i in range(7):
-            self.add_enemy()
-
         self.keys_pressed = set()
+        self.init_pool()
 
-        for i in range(50):self.add_dot()
+        for i in range(7):self.add_enemy()
+        for i in range(5):self.add_dot()
 
         self.schedule(self.update)
 
+    def init_pool(self):
+        self.dot_pool = []
+        for i in range(Arena.MAX_DOTS):
+            d = Dot()
+            d.disable()
+            self.dot_pool.append(d)
+            self.batch.add(d,name=d.tag)
+
+        self.snake_pool = []
+        for i in range(Arena.MAX_SNAKES):
+            enemy = SnakeAI()
+            enemy.disable()
+            self.snake_pool.append(enemy)
+            self.add(enemy, 10000)
+            enemy.init_body()
+
+
     def add_enemy(self):
-        enemy = SnakeAI()
-        self.add(enemy, 10000)
-        enemy.init_body()
+        if len(self.snake_pool) == 0: return
+        enemy = self.snake_pool.pop()
+        enemy.enable()
         self.enemies.add(enemy)
 
-    def remove_enemy(self, snake):
-        self.remove(snake)
-        self.enemies.remove(snake)
+    def remove_enemy(self, enemy):
+        enemy.disable()
+        self.enemies.remove(enemy)
+        self.snake_pool.insert(0,enemy)
 
-    def add_dot(self, d = None):
-        if d is None: d = Dot()
-        self.dots.add(d)
-        self.batch.add(d,name=d.tag)
+    def add_dot(self):
+        if len(self.dot_pool) == 0: return
+        dot = self.dot_pool.pop()
+        dot.enable()
+        self.dots.add(dot)
+
+    def add_snake_dot(self,pos,color):
+        if len(self.dot_pool) == 0: return
+        dot = self.dot_pool.pop()
+        dot.enable()
+        dot.position = pos
+        dot.color = color
+        self.dots.add(dot)
 
     def remove_dot(self, dot):
-        try:
-            self.dots.remove(dot)
-            self.batch.remove(dot.tag)
-        except Exception,e:
-            print e
+        dot.disable()
+        self.dots.remove(dot)
+        self.dot_pool.insert(0,dot)
 
     def detect_collision(self):
         snakes = set(self.enemies)
@@ -62,16 +88,13 @@ class Arena(cocos.layer.ColorLayer):
             if self.snake == snake:
                 self.parent.end_game()
             else:
-                self.remove(snake)
-                self.add_enemy()
+                for b in snake.body:
+                    self.add_snake_dot(b.position,b.color)
+                    self.batch.remove(b)
 
-            for b in snake.body:
-                bdot = Dot(b.position, b.color)
-                #self.batch.add(bdot)
-                #self.batch.add(Dot(b.position, b.color))
-                self.add_dot(bdot)
-                self.batch.remove(b)
+                self.add_enemy()
         def onSnakeDotCollide(dot,snake):
+            #print 'snake dot',dot.tag, dot.position
             snake.add_score(2 if dot.is_big else 1)
             if snake == self.snake: self.parent.update_score()
             self.remove_dot(dot)

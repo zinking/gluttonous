@@ -14,8 +14,9 @@ class QuadTree(object):
         self.snakes = self.filterSnakes(snakes)
         self.dots = self.filterDots(dots)
         self.quads = []
+        hasChildren = len(self.snakes)>0 or len(self.dots)>0
 
-        if lvl > 0:
+        if lvl > 0 and hasChildren:
             nw = QuadTree(lvl-1,(x,y,hw,hh),self.snakes,self.dots)
             ne = QuadTree(lvl-1,(cx,y,hw,hh),self.snakes,self.dots)
             sw = QuadTree(lvl-1,(x,cy,hw,hh),self.snakes,self.dots)

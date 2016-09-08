@@ -20,6 +20,19 @@ class Snake(cocos.cocosnode.CocosNode):
         self.body = []
         self.schedule(self.update)
 
+    def disable(self):
+        self.visible = False
+        self.x = -100
+        self.y = -100
+        self.is_dead = True
+
+    def enable(self):
+        self.visible = True
+        self.position = random.randrange(700, 900), random.randrange(350, 450)
+        self.x = self.position[0]
+        self.y = self.position[1]
+        self.is_dead = False
+
     def add_body(self):
         b = Sprite('circle.png', color=self.color)
         b.scale = 1.5
@@ -145,6 +158,13 @@ class SnakeAI(Snake):
             self.y > define.HEIGHT - 100 and self.angle_dest < 180
         ):
             self.angle_dest = -self.angle_dest
+
+    def enable(self):
+        self.visible = True
+        self.position = random.randrange(300, 1300), random.randrange(200, 600)
+        self.x = self.position[0]
+        self.y = self.position[1]
+        self.is_dead = False
 
     def crash(self):
         if not self.is_dead:
